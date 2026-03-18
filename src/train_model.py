@@ -1,44 +1,138 @@
+﻿import sys
+from pathlib import Path
+
+# Add src to path
+src_path = Path(__file__).parent
+sys.path.insert(0, str(src_path))
+
 from imblearn.combine import SMOTETomek
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import joblib
 import pandas as pd
-import os
+import logging
 
-# Load cleaned data
-data = pd.read_csv("data/clean_credit_data.csv")
-X = data.drop(columns=["SeriousDlqin2yrs"])
-y = data["SeriousDlqin2yrs"]
-
-# SMOTETomek balancing
-smt = SMOTETomek(random_state=42)
-X_balanced, y_balanced = smt.fit_resample(X, y)
-
-# Train-test split
-X_train, X_test, y_train, y_test = train_test_split(
-    X_balanced, y_balanced, test_size=0.2, random_state=42
+from config import (
+    CLEAN_DATA_PATH, TARGET_COLUMN, RANDOM_STATE, 
+    TEST_SIZE, MODELS_DIR, DEFAULT_MODEL_PATH
 )
 
-# Train XGBoost model
-model = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42)
-model.fit(X_train, y_train)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Evaluate
-y_pred = model.predict(X_test)
-report = classification_report(y_test, y_pred)
 
-print("📊 Classification Report:\n")
-print(report)
+def load_data(path: str = None) -> pd.DataFrame:
+    '''Load cleaned data.'''
+    if path is None:
+        path = CLEAN_DATA_PATH
+    
+    if not Path(path).exists():
+        raise FileNotFoundError(f'Data file not found: {path}')
+    
+    df = pd.read_csv(path)
+    logger.info(f'Loaded data from {path}, shape: {df.shape}')
+    return df
 
-# Save model
-os.makedirs("models", exist_ok=True)
-joblib.dump(model, "notebooks/models/xgb_smote_model.pkl")
 
-# Save classification report
-os.makedirs("notebooks/outputs", exist_ok=True)
-with open("notebooks/outputs/model_report.txt", "w") as f:
-    f.write("XGBoost + SMOTETomek Classification Report\n")
-    f.write("="*45 + "\n")
-    f.write(report)
-    f.write("\n✅ Model: notebooks/models/xgb_smote_model.pkl")
+def balance_data(X: pd.DataFrame, y: pd.Series, random_state: int = None):
+    '''Apply SMOTETomek balancing.'''
+    if random_state is None:
+        random_state = RANDOM_STATE
+    
+    logger.info('Applying SMOTETomek balancing...')
+    smt = SMOTETomek(random_state=random_state)
+    X_balanced, y_balanced = smt.fit_resample(X, y)
+    
+    logger.info(f'Original class distribution: {y.value_counts().to_dict()}')
+    logger.info(f'Balanced class distribution: {pd.Series(y_balanced).value_counts().to_dict()}')
+    
+    return X_balanced, y_balanced
+
+
+def train_model(X_train, y_train, random_state: int = None):
+    '''Train XGBoost model.'''
+    if random_state is None:
+        random_state = RANDOM_STATE
+    
+    logger.info('Training XGBoost model...')
+    model = XGBClassifier(
+        use_label_encoder=False, 
+        eval_metric='logloss', 
+        random_state=random_state
+    )
+    model.fit(X_train, y_train)
+    logger.info('Model training completed')
+    
+    return model
+
+
+def evaluate_model(model, X_test, y_test) -> str:
+    '''Evaluate model and return classification report.'''
+    y_pred = model.predict(X_test)
+    report = classification_report(y_test, y_pred)
+    logger.info('Model evaluation completed')
+    return report
+
+
+def save_model(model, path: str = None):
+    '''Save trained model.'''
+    if path is None:
+        path = DEFAULT_MODEL_PATH
+    
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, path)
+    logger.info(f'Model saved to {path}')
+
+
+def save_report(report: str, path: str = None):
+    '''Save classification report.'''
+    if path is None:
+        path = Path(MODELS_DIR) / '..' / 'outputs' / 'model_report.txt'
+    
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w') as f:
+        f.write('XGBoost + SMOTETomek Classification Report\n')
+        f.write('=' * 45 + '\n')
+        f.write(report)
+        f.write('\n✅ Model trained successfully')
+    
+    logger.info(f'Report saved to {path}')
+
+
+def main():
+    '''Main training pipeline.'''
+    try:
+        # Load data
+        data = load_data()
+        X = data.drop(columns=[TARGET_COLUMN])
+        y = data[TARGET_COLUMN]
+        
+        # Balance data
+        X_balanced, y_balanced = balance_data(X, y)
+        
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_balanced, y_balanced, test_size=TEST_SIZE, random_state=RANDOM_STATE
+        )
+        
+        # Train model
+        model = train_model(X_train, y_train)
+        
+        # Evaluate
+        report = evaluate_model(model, X_test, y_test)
+        logger.info(f'Classification Report:\n{report}')
+        
+        # Save outputs
+        save_model(model)
+        save_report(report)
+        
+        logger.info('Training pipeline completed successfully!')
+        
+    except Exception as e:
+        logger.error(f'Error during training: {e}')
+        raise
+
+
+if __name__ == '__main__':
+    main()

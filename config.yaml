@@ -1,0 +1,52 @@
+# Project Configuration
+app:
+  name: "LoanLens"
+  version: "1.0.0"
+  page_title: "LoanLens - Loan Default Prediction"
+  layout: "wide"
+
+# Data paths
+data:
+  raw_data_path: "data/credit_data.csv"
+  clean_data_path: "data/clean_credit_data.csv"
+  target_column: "SeriousDlqin2yrs"
+
+# Model configuration
+model:
+  default_threshold: 0.5
+  random_state: 42
+  test_size: 0.2
+  
+# XGBoost parameters
+xgboost:
+  use_label_encoder: false
+  eval_metric: "logloss"
+  random_state: 42
+
+# SMOTETomek parameters
+sampling:
+  random_state: 42
+
+# Required features for prediction
+features:
+  required:
+    - "RevolvingUtilizationOfUnsecuredLines"
+    - "age"
+    - "NumberOfTime30-59DaysPastDueNotWorse"
+    - "DebtRatio"
+    - "MonthlyIncome"
+    - "NumberOfOpenCreditLinesAndLoans"
+    - "NumberOfTimes90DaysLate"
+    - "NumberRealEstateLoansOrLines"
+    - "NumberOfTime60-89DaysPastDueNotWorse"
+    - "NumberOfDependents"
+  drop_columns:
+    - "Unnamed: 0"
+    - "SeriousDlqin2yrs"
+
+# Model paths
+paths:
+  models_dir: "notebooks/models"
+  outputs_dir: "notebooks/outputs"
+  default_model: "notebooks/models/xgb_smote_model.pkl"
+  scaler: "notebooks/models/scaler.joblib"

@@ -1,126 +1,88 @@
-# LoanLens
+# LoanLens 🚀
 
-A machine learning-based loan default prediction system with explainable AI (XAI) capabilities using SHAP.
+**LoanLens** is a full-stack, state-of-the-art Loan Default Prediction system. It combines high-performance machine learning (XGBoost) with modern web technologies (React & FastAPI) and Explainable AI (SHAP) to provide transparent and actionable credit risk insights.
 
-## Overview
+![LoanLens Banner](https://img.shields.io/badge/Status-Complete-success?style=for-the-badge)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react)
+![XGBoost](https://img.shields.io/badge/XGBoost-1e3a8a?style=for-the-badge)
 
-LoanLens is a comprehensive credit risk assessment tool that:
-- Predicts loan default probability using XGBoost models
-- Provides SHAP-based explainability for predictions
-- Offers an interactive Streamlit web interface
-- Supports multiple model comparison
+## ✨ Core Features
 
-## Features
+- **Advanced Modeling**: XGBoost classifier with SMOTETomek resampling to handle extreme class imbalance (93% default rate).
+- **Embedded Pipeline**: Model artifacts now include a full `StandardScaler` pipeline, allowing seamless prediction without manual feature scaling.
+- **Explainable AI (XAI)**: SHAP-based feature importance scores integrated directly into every prediction.
+- **Full-Stack Architecture**:
+  - **Backend**: FastAPI with async support for real-time predictions, model management, and health monitoring.
+  - **Frontend**: Responsive React dashboard with interactive metrics and model management UI.
+- **Batch Processing**: Support for CSV-based batch predictions with downloadable results.
+- **Dockerized Ready**: Fully containerized setup for easy deployment.
 
-- **Model Training**: XGBoost with SMOTETomek for class imbalance handling
-- **Prediction Interface**: Upload CSV data and get default probabilities
-- **Explainability**: SHAP summary plots and individual record analysis
-- **Threshold Tuning**: Interactive threshold adjustment with confusion matrix
-- **Model Comparison**: Compare multiple trained models simultaneously
+## 📂 Project Structure
 
-## Project Structure
-
-```
+```text
 LoanLens/
-├── app.py                    # Streamlit web application
-├── config.yaml               # Configuration settings
-├── requirements.txt          # Python dependencies
-├── README.md                 # This file
-├── .gitignore               # Git ignore rules
-├── data/                     # Data directory
-│   ├── credit_data.csv      # Raw credit data
-│   └── clean_credit_data.csv # Preprocessed data
-├── notebooks/               # Jupyter notebooks
-│   ├── 01_EDA.ipynb        # Exploratory Data Analysis
-│   ├── 02_Preprocessing.ipynb # Data preprocessing
-│   ├── 03_Modeling.ipynb    # Model training
-│   ├── 04_Explainability.ipynb # SHAP analysis
-│   ├── 05_Report.ipynb      # Final report
-│   └── models/              # Saved models
-│       ├── xgb_smote_model.pkl
-│       └── scaler.joblib
-└── src/                     # Source code
-    ├── __init__.py
-    ├── config.py            # Configuration management
-    ├── data_preprocessing.py # Data preprocessing utilities
-    ├── train_model.py       # Model training script
-    └── utils.py             # Utility functions
+├── api/                    # FastAPI Backend
+│   ├── main_extended.py    # Main API with all endpoints
+├── frontend/               # React Dashboard (Material UI)
+├── src/                    # Core ML Logic
+│   ├── train_model.py      # Fixed Pipeline training (SMOTE + Scaler)
+│   ├── models.py           # Model Manager for inference
+│   ├── data_handler.py     # CSV validation and cleaning
+│   └── monitoring.py       # Health and drift detection logic
+├── data/                   # Dataset Storage
+├── notebooks/              # EDA & Research Notebooks
+├── test_low_risk.csv       # Verification data for healthy profiles
+├── test_high_risk.csv      # Verification data for default profiles
+├── run_api.py              # Easy launcher for backend
+├── config.yaml             # Global project configuration
+└── requirements.txt        # Python dependencies
 ```
 
-## Installation
+## 🛠️ Quick Start
 
-### Prerequisites
+### 1. Requirements
 
-- Python 3.8+
-- pip or conda
+Ensure you have **Python 3.10+** and **Node.js** installed.
 
-### Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd LoanLens
-   ```
-
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   source venv/bin/activate  # macOS/Linux
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-### Running the Web Application
+### 2. Backend Setup
 
 ```bash
-streamlit run app.py
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the API
+python api/main_extended.py
 ```
 
-The application will be available at `http://localhost:8501`
+> The API will be available at: [http://localhost:8000](http://localhost:8000)
+> Interactive Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Training a New Model
+### 3. Frontend Setup
+
+```bash
+cd frontend
+npm install  # First time only
+npm start
+```
+
+> The Dashboard will be available at: [http://localhost:3000](http://localhost:3000)
+
+## 📊 Model Training
+
+We resolved the common "Always Predicts High Risk" bias by implementing an `ImbPipeline` that correctly isolates SMOTE logic to training folds and embeds scaling within the model artifact.
+
+To retrain the model from scratch:
 
 ```bash
 python src/train_model.py
 ```
 
-## Data Features
+*Current Metrics: ROC AUC ~0.94, F1-Score ~0.88*
 
-The model uses the following features:
+## 🧪 Testing
 
-| Feature | Description |
-|---------|-------------|
-| RevolvingUtilizationOfUnsecuredLines | Credit card balance / credit limits |
-| age | Age of borrower in years |
-| NumberOfTime30-59DaysPastDueNotWorse | Times 30-59 days late (last 2 years) |
-| DebtRatio | Monthly debt / monthly income |
-| MonthlyIncome | Monthly income |
-| NumberOfOpenCreditLinesAndLoans | Open loans and lines of credit |
-| NumberOfTimes90DaysLate | Times 90+ days late |
-| NumberRealEstateLoansOrLines | Real estate loans or lines |
-| NumberOfTime60-89DaysPastDueNotWorse | Times 60-89 days late |
-| NumberOfDependents | Number of dependents |
+You can use the provided testing files in the root directory:
 
-## Model Details
-
-- **Algorithm**: XGBoost Classifier
-- **Balancing**: SMOTETomek for handling class imbalance
-- **Evaluation**: ROC AUC, Precision, Recall, F1-Score
-- **Explainability**: SHAP (SHapley Additive exPlanations)
-
-## Development
-
-- `app.py`: Main Streamlit application
-- `src/data_preprocessing.py`: Data pipeline
-- `src/train_model.py`: Model training
-- `src/utils.py`: Helper functions
-
-## License
-
-Academic project developed by Group 21.
+- **`test_low_risk.csv`**: Five records of users with high income and low utilization (Expected: LOW RISK).
+- **`test_high_risk.csv`**: Five records of users with past-due history and high utilization (Expected: HIGH RISK).

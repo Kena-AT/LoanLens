@@ -1,4 +1,4 @@
-# LoanLens 🚀
+# LoanLens
 
 **LoanLens** is a full-stack, state-of-the-art Loan Default Prediction system. It combines high-performance machine learning (XGBoost) with modern web technologies (React & FastAPI) and Explainable AI (SHAP) to provide transparent and actionable credit risk insights.
 

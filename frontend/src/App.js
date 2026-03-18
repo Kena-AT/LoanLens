@@ -47,7 +47,7 @@ function App() {
 
       <Box component="footer" sx={{ py: 3, bgcolor: 'background.paper', mt: 'auto' }}>
         <Typography variant="body2" color="text.secondary" align="center">
-          LoanLens 2.0 - Advanced Loan Default Prediction System © 2024
+          LoanLens 2.0 - Loan Default Prediction System © 2026
         </Typography>
       </Box>
     </Box>

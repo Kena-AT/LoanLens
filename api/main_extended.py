@@ -514,15 +514,6 @@ async def retraining_history():
     
     return {"history": retraining_pipeline.get_retraining_history()}
 
-@app.get("/metrics", tags=["Monitoring"])
-async def get_metrics():
-    """Get model performance metrics."""
-    return model_monitor.get_metrics()
-
-@app.get("/models", tags=["Model Management"])
-async def list_loaded_models():
-    """List currently loaded models."""
-    return {"models": model_manager.model_names, "count": len(model_manager)}
 
 @app.get("/models/registry", tags=["Model Management"])
 async def list_registered_models():

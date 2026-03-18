@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 from pathlib import Path
 
 # Add src to path
@@ -95,10 +95,15 @@ def save_report(report: str, path: str = None):
         f.write('XGBoost + SMOTETomek Classification Report\n')
         f.write('=' * 45 + '\n')
         f.write(report)
-        f.write('\n✅ Model trained successfully')
+        f.write('\nModel trained successfully')
     
     logger.info(f'Report saved to {path}')
 
+
+from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.preprocessing import StandardScaler
+
+# ... (inside main after splitting data)
 
 def main():
     '''Main training pipeline.'''
@@ -108,23 +113,38 @@ def main():
         X = data.drop(columns=[TARGET_COLUMN])
         y = data[TARGET_COLUMN]
         
-        # Balance data
-        X_balanced, y_balanced = balance_data(X, y)
-        
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_balanced, y_balanced, test_size=TEST_SIZE, random_state=RANDOM_STATE
+        # Split data FIRST (avoid leakage)
+        X_train_raw, X_test, y_train_raw, y_test = train_test_split(
+            X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
         )
         
-        # Train model
-        model = train_model(X_train, y_train)
+        logger.info(f'Training set (raw): {X_train_raw.shape}, Test set: {X_test.shape}')
+        
+        # Create pipeline: SMOTE -> Scaler -> XGBoost
+        # Note: ImbPipeline only resamples during .fit()
+        pipeline = ImbPipeline([
+            ('smote', SMOTETomek(random_state=RANDOM_STATE)),
+            ('scaler', StandardScaler()),
+            ('classifier', XGBClassifier(
+                use_label_encoder=False, 
+                eval_metric='logloss', 
+                random_state=RANDOM_STATE,
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1
+            ))
+        ])
+        
+        logger.info('Fitting pipeline (SMOTE + Scaler + XGBoost)...')
+        pipeline.fit(X_train_raw, y_train_raw)
         
         # Evaluate
-        report = evaluate_model(model, X_test, y_test)
+        y_pred = pipeline.predict(X_test)
+        report = classification_report(y_test, y_pred)
         logger.info(f'Classification Report:\n{report}')
         
         # Save outputs
-        save_model(model)
+        save_model(pipeline)
         save_report(report)
         
         logger.info('Training pipeline completed successfully!')

@@ -28,7 +28,9 @@ function Models() {
     setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/models`);
-      setModels(response.data);
+      // Normalize: API may return an array OR { models: [...], count: N }
+      const data = response.data;
+      setModels(Array.isArray(data) ? data : (data.models || []));
     } catch (err) {
       setError('Failed to fetch models');
     } finally {

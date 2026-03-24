@@ -1,8 +1,10 @@
 """Visualization and UI components module."""
-import streamlit as st
-import pandas as pd
+
+from typing import Any, Dict, Optional
+
 import numpy as np
-from typing import Optional, Dict, Any
+import pandas as pd
+import streamlit as st
 
 
 def render_header():
@@ -14,11 +16,7 @@ def render_header():
 def render_sidebar():
     """Render sidebar with model upload."""
     st.sidebar.header("🔍 Model Upload")
-    return st.sidebar.file_uploader(
-        "Upload one or more trained models", 
-        type=["pkl"], 
-        accept_multiple_files=True
-    )
+    return st.sidebar.file_uploader("Upload one or more trained models", type=["pkl"], accept_multiple_files=True)
 
 
 def render_data_upload():
@@ -54,47 +52,33 @@ def render_predictions(predictions_df: pd.DataFrame):
     st.dataframe(predictions_df)
 
 
-def render_threshold_tuning(
-    model_names: list, 
-    default_threshold: float = 0.5
-) -> tuple:
+def render_threshold_tuning(model_names: list, default_threshold: float = 0.5) -> tuple:
     """Render threshold tuning section.
-    
+
     Returns:
         Tuple of (selected_model_idx, threshold)
     """
     st.subheader("🎯 Threshold Tuning & Default Classification")
-    
+
     selected_idx = st.selectbox(
-        "Select a model to evaluate",
-        range(len(model_names)),
-        format_func=lambda i: model_names[i],
-        key="eval_model"
+        "Select a model to evaluate", range(len(model_names)), format_func=lambda i: model_names[i], key="eval_model"
     )
-    
-    threshold = st.slider(
-        "Select classification threshold for 'default'", 
-        0.0, 1.0, default_threshold, 0.01
-    )
-    
+
+    threshold = st.slider("Select classification threshold for 'default'", 0.0, 1.0, default_threshold, 0.01)
+
     return selected_idx, threshold
 
 
 def render_true_labels_upload():
     """Render true labels upload section."""
-    return st.file_uploader(
-        "📂 Upload true labels CSV (must include column `SeriousDlqin2yrs`)", 
-        type=["csv"]
-    )
+    return st.file_uploader("📂 Upload true labels CSV (must include column `SeriousDlqin2yrs`)", type=["csv"])
 
 
 def render_confusion_matrix(cm: np.ndarray):
     """Render confusion matrix."""
     st.markdown("### 🧮 Confusion Matrix")
     cm_df = pd.DataFrame(
-        cm, 
-        index=["Actual: No Default", "Actual: Default"],
-        columns=["Predicted: No Default", "Predicted: Default"]
+        cm, index=["Actual: No Default", "Actual: Default"], columns=["Predicted: No Default", "Predicted: Default"]
     )
     st.dataframe(cm_df)
 
@@ -118,23 +102,14 @@ def render_shap_section():
 def render_model_selector(model_names: list, key: str = "model_select") -> int:
     """Render model selector for SHAP analysis."""
     return st.selectbox(
-        "Select model for SHAP analysis", 
-        range(len(model_names)), 
-        format_func=lambda i: model_names[i],
-        key=key
+        "Select model for SHAP analysis", range(len(model_names)), format_func=lambda i: model_names[i], key=key
     )
 
 
 def render_record_selector(max_index: int, key: str = "record_index") -> int:
     """Render record index selector."""
     st.markdown("### 🔎 SHAP Bar Plot Per Record")
-    return st.number_input(
-        "Select record index for Bar Plot", 
-        min_value=0, 
-        max_value=max_index, 
-        step=1, 
-        key=key
-    )
+    return st.number_input("Select record index for Bar Plot", min_value=0, max_value=max_index, step=1, key=key)
 
 
 def render_shap_summary():
@@ -166,5 +141,5 @@ def render_footer():
         "<div style='text-align: center; font-size: 0.9em; color: gray;'>"
         "Developed by Group 21 for the LoanLens project."
         "</div>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )

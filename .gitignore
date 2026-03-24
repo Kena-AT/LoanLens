@@ -43,7 +43,6 @@ data/*.csv
 # Generated outputs
 outputs/
 *.png
-*.txt
 
 # OS
 .DS_Store
